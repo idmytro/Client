@@ -17,6 +17,7 @@ import Vue, { PropOptions, ComponentOptions, FunctionalComponentOptions } from '
 import { GLOBAL } from 'core/const/links';
 import {
 
+	storeRgxp,
 	SystemField,
 	ComponentField,
 	ComponentProp,
@@ -109,6 +110,8 @@ export function getComponent(
 			ctx.instance = instance;
 			ctx.componentName = meta.name;
 			ctx.meta = createMeta(meta);
+			ctx.semaphore = {};
+			ctx.linkedSemaphores = [];
 
 			runHook('beforeRuntime', ctx.meta, ctx)
 				.catch(stderr);
@@ -504,7 +507,9 @@ export function initDataObject(
 
 				if (val === undefined) {
 					if (data[key] === undefined) {
-						val = el.default !== undefined ? el.default : Object.fastClone(instance[key]);
+						val = el.default !== undefined ?
+							el.default : Object.fastClone(instance[el.protected ? key.replace(storeRgxp, '') : key]);
+
 						data[key] = val;
 					}
 

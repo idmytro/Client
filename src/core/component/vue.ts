@@ -14,7 +14,10 @@ import { ComponentMeta, Hooks } from 'core/component';
 // tslint:disable:no-empty
 // tslint:disable:typedef
 
-export type VueElement<T = unknown> = Element & {vueComponent?: T};
+export type VueElement<T = unknown> = Element & {
+	vueComponent?: T
+};
+
 export default class VueInterface<
 	C extends VueInterface = VueInterface<any, any>,
 	R extends VueInterface = VueInterface<any, any>
@@ -31,6 +34,8 @@ export default class VueInterface<
 	readonly $normalParent?: C;
 	readonly $root!: R | any;
 	readonly $isServer!: boolean;
+	semaphore!: Dictionary<Set<string>>;
+	protected linkedSemaphores!: VueInterface[];
 	protected readonly $async!: Async<VueInterface>;
 	protected readonly meta!: ComponentMeta;
 	protected readonly $refs!: Dictionary;

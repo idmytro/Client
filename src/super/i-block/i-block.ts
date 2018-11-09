@@ -3489,6 +3489,16 @@ export default class iBlock extends VueInterface<iBlock, iStaticPage> {
 		this.async.clearAll();
 		this.localEvent.removeAllListeners();
 		delete (<StrictDictionary<any>>classesCache).dict.els[this.componentId];
+
+		for (let o = this.linkedSemaphores, i = 0; i < o.length; i++) {
+			const
+				el = o[i];
+
+			delete el.semaphore[this.componentId];
+
+			// @ts-ignore
+			el.$emit('stateSemaphoreFree');
+		}
 	}
 }
 

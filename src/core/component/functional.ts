@@ -80,6 +80,8 @@ export function createFakeCtx(
 
 		meta,
 		children: [],
+		semaphore: {},
+		linkedSemaphores: [],
 
 		$async: $a,
 		$root: p.$root,

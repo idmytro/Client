@@ -11,7 +11,7 @@ import { component, field, watch } from 'super/i-block/i-block';
 
 @component({root: true})
 export default class pIndex extends iStaticPage {
-	@field()
+	@field({protected: true})
 	foo: number = 1;
 
 	@watch('?$el:click')

@@ -6,6 +6,7 @@
  * https://github.com/V4Fire/Client/blob/master/LICENSE
  */
 
+import symbolGenerator from 'core/symbol';
 import { PropOptions, WatchOptions } from 'vue';
 import {
 
@@ -54,6 +55,7 @@ export const prop = paramsFactory<Function | ObjectConstructor | ComponentProp>(
 
 export interface SystemField<CTX extends VueInterface = VueInterface> {
 	atom?: boolean;
+	protected?: boolean;
 	default?: unknown;
 	unique?: boolean | UniqueFieldFn<CTX>;
 	after?: CanArray<string>;
@@ -120,6 +122,12 @@ export const hook = paramsFactory<ComponentHooks>(null, (hook) => ({hook}));
  */
 export const watch = paramsFactory<FieldWatcher | MethodWatchers>(null, (watch) => ({watch}));
 
+export const
+	storeRgxp = /Store$/;
+
+const
+	$$ = symbolGenerator();
+
 /**
  * Factory for creating component property decorators
  *
@@ -135,13 +143,33 @@ export function paramsFactory<T = unknown>(
 			let
 				p = params;
 
+			const {
+				props,
+				fields,
+				systemFields,
+				accessors,
+				computed,
+				methods
+			} = meta;
+
+			const cancelProtected = () => {
+				const
+					obj = computed[key];
+
+				if (obj && obj.protected) {
+					delete computed[key];
+					key = key.replace(storeRgxp, '');
+				}
+			};
+
 			if (desc) {
-				delete meta.props[key];
-				delete meta.fields[key];
-				delete meta.systemFields[key];
+				delete props[key];
+				delete fields[key];
+				delete systemFields[key];
+				cancelProtected();
 
 				const metaKey = cluster || (
-					'value' in desc ? 'methods' : key in meta.computed && p.cache !== false ? 'computed' : 'accessors'
+					'value' in desc ? 'methods' : key in computed && p.cache !== false ? 'computed' : 'accessors'
 				);
 
 				if (transformer) {
@@ -197,9 +225,9 @@ export function paramsFactory<T = unknown>(
 					return;
 				}
 
-				if (metaKey === 'accessors' ? key in meta.computed : !('cache' in p) && key in meta.accessors) {
-					obj.accessors = meta.computed[key];
-					delete meta.computed[key];
+				if (metaKey === 'accessors' ? key in computed : !('cache' in p) && key in accessors) {
+					obj.accessors = computed[key];
+					delete computed[key];
 
 				} else {
 					obj[key] = {};
@@ -208,26 +236,66 @@ export function paramsFactory<T = unknown>(
 				return;
 			}
 
-			delete meta.methods[key];
-			delete meta.accessors[key];
-			delete meta.computed[key];
+			delete methods[key];
+			delete accessors[key];
+			delete computed[key];
 
 			const
-				accessors = meta.accessors[key] ? meta.accessors : meta.computed;
+				accessorsObj = accessors[key] ? accessors : computed;
 
-			if (accessors[key]) {
+			if (accessorsObj[key]) {
 				Object.defineProperty(meta.constructor.prototype, key, {
 					writable: true,
 					configurable: true,
 					value: undefined
 				});
 
-				delete accessors[key];
+				delete accessorsObj[key];
 			}
 
 			const
 				metaKey = cluster || (key in meta.props ? 'props' : 'fields'),
 				obj = meta[metaKey];
+
+			if (p.protected) {
+				if (metaKey === 'fields') {
+					const id = key;
+					key += 'Store';
+
+					if (!accessors[id] && !computed[id]) {
+						computed[id] = {
+							protected: true,
+
+							get(): unknown {
+								return this[key];
+							},
+
+							set(value: unknown): void {
+								const exec = () => {
+									//console.log(value);
+									//return;
+
+									if (Object.keys(this.semaphore).length) {
+										this.$async.once(this, 'stateSemaphoreFree', exec, {
+											group: `[[PROTECTED:${id}]]`,
+											label: $$.setProtectedField
+										});
+
+										return;
+									}
+
+									this[key] = value;
+								};
+
+								exec();
+							}
+						};
+					}
+
+				} else {
+					cancelProtected();
+				}
+			}
 
 			const inverse = {
 				props: ['fields', 'systemFields'],

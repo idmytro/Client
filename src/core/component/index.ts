@@ -120,6 +120,7 @@ export interface UniqueFieldFn<T extends VueInterface = VueInterface> {
 
 export interface SystemField<T extends VueInterface = VueInterface> {
 	atom?: boolean;
+	protected?: boolean;
 	default?: unknown;
 	unique?: boolean | UniqueFieldFn<T>;
 	after: Set<string>;
@@ -195,6 +196,10 @@ export interface ModsDecl {
 	[name: string]: Array<ModVal | ModVal[] | typeof PARENT> | void;
 }
 
+export interface AccessorOptions<T = unknown> extends ComputedOptions<T> {
+	protected?: boolean;
+}
+
 export interface FunctionalCtx {
 	componentName: string;
 	meta: ComponentMeta;
@@ -213,8 +218,8 @@ export interface ComponentMeta {
 	systemFields: Dictionary<ComponentField>;
 	mods: ModsDecl;
 
-	computed: Dictionary<ComputedOptions<unknown>>;
-	accessors: Dictionary<ComputedOptions<unknown>>;
+	computed: Dictionary<AccessorOptions>;
+	accessors: Dictionary<AccessorOptions>;
 	methods: Dictionary<ComponentMethod>;
 	watchers: Dictionary<WatchOptionsWithHandler[]>;
 
