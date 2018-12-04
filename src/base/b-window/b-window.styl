@@ -14,9 +14,16 @@ $p = {
 }
 
 b-window extends i-data
-	absolute top 0 left 0
+	position absolute
+	left 0
 	z-index $p.zIndex
 	min-width 100%
+
+	&:not(&_pinned-bottom_true)
+		top 0
+
+	&_pinned-bottom_true
+		bottom 0
 
 	&_width_full &__window
 		width 100%
@@ -33,7 +40,10 @@ b-window extends i-data
 		z-index 1
 		display flex
 		justify-content center
-		size 100% 100vh
+		width 100%
+
+	&:not(&_pinned-bottom_true) &__wrapper
+		height 100vh
 
 	&__window
 		width $p.width
